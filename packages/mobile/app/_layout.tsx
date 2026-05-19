@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { Asset } from "expo-asset";
-import { useEffect, useState } from "react";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useState, useCallback } from "react";
 import { Toast, toastConfig } from "../components/FinnyToast";
 import {
   Poppins_400Regular,
@@ -25,7 +26,10 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
+
+// Keep splash visible until we're ready
+SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
@@ -57,20 +61,25 @@ export default function RootLayout() {
     ]).then(() => setAssetsLoaded(true)).catch(() => setAssetsLoaded(true));
   }, []);
 
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded && assetsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, assetsLoaded]);
+
+  // Don't render anything until ready — splash stays visible
   if (!fontsLoaded || !assetsLoaded) {
-    return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" }}>
-        <ActivityIndicator size="large" color="#268FFF" />
-      </View>
-    );
+    return null;
   }
 
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false, animation: "none" }} />
-        <Toast config={toastConfig} />
+        <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+          <Stack screenOptions={{ headerShown: false, animation: "none" }} />
+          <Toast config={toastConfig} />
+        </View>
       </QueryClientProvider>
     </SafeAreaProvider>
   );
