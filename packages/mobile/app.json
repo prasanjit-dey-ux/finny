@@ -14,7 +14,7 @@
       "apiUrl": "https://y40hf6wbskuu5jqo9ukq6-preview-4200.runable.site/",
       "router": {},
       "eas": {
-        "projectId": "ad757dc2-b63e-4bb6-8420-3f5d025d83b4"
+        "projectId": "560e8a68-b7c0-4eba-9e4d-1b845d6eace7"
       }
     },
     "ios": {
@@ -32,7 +32,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/logo.svg",
       "bundler": "metro"
     },
     "plugins": [
