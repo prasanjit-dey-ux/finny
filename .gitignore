@@ -5,5 +5,9 @@ dist/
 .env.*
 *.log
 .DS_Store
-packages/mobile/assets/logo.svg
-shot*.png
+.turbo/
+
+# Debug screenshots
+*.png
+!packages/mobile/assets/**/*.png
+!packages/web/public/**/*.png
