@@ -2,7 +2,7 @@
   "expo": {
     "icon": "./assets/icon.png",
     "android": {
-      "package": "com.finny_f7k2.runable",
+      "package": "com.finnyf7k2.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#E6F3FF"
@@ -18,7 +18,7 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.finny_f7k2.runable",
+      "bundleIdentifier": "com.finnyf7k2.app",
       "supportsTablet": true
     },
     "splash": {
@@ -39,7 +39,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ],
     "owner": "prasanjit-dey"
   }
