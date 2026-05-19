@@ -68,7 +68,7 @@ function AnimatedSplash({ onDone }: { onDone: () => void }) {
       // Stagger: each letter appears after the previous
       Animated.stagger(140, letterSequence),
       // Hold for a moment
-      Animated.delay(700),
+      Animated.delay(1500),
       // Fade everything out
       Animated.timing(fadeOut, {
         toValue: 0,
