@@ -6,8 +6,9 @@ dist/
 *.log
 .DS_Store
 .turbo/
+task.md
+design.md
+UI_FIXES.md
 
-# Debug screenshots
-*.png
-!packages/mobile/assets/**/*.png
-!packages/web/public/**/*.png
+# Root-level debug screenshots
+/*.png
