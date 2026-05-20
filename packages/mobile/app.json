@@ -45,8 +45,7 @@
         {
           "photosPermission": "Allow Finny to access your photos."
         }
-      ],
-      "expo-navigation-bar"
+      ]
     ],
     "owner": "prasanjit-dey"
   }
