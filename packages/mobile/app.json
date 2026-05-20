@@ -22,7 +22,9 @@
       "supportsTablet": true
     },
     "splash": {
-      "backgroundColor": "#E6F3FF"
+      "backgroundColor": "#E6F3FF",
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain"
     },
     "name": "Finny",
     "slug": "finny",
