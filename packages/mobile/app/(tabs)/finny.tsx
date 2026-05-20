@@ -1,10 +1,11 @@
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   FlatList, KeyboardAvoidingView, Platform, ActivityIndicator,
-  ScrollView, Animated, Dimensions,
+  ScrollView, Animated, Dimensions, Keyboard,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import * as NavigationBar from "expo-navigation-bar";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Microphone, CaretLeft, PaperPlaneRight, Stop as StopIcon } from "phosphor-react-native";
 import { useRouter } from "expo-router";
@@ -12,7 +13,7 @@ import Constants from "expo-constants";
 import { Store } from "../../lib/store";
 import { s, vs, fs } from "../../lib/responsive";
 import { Audio } from "expo-av";
-import { BlueOrb, GreenOrb } from "../../components/Orbs";
+import { BlueOrb, UserOrb } from "../../components/Orbs";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 
@@ -38,12 +39,14 @@ const SUGGESTED_CHAT = [
 ];
 
 export default function FinnyScreen() {
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [chatActive, setChatActive] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const nativeRecordingRef = useRef<Audio.Recording | null>(null);
@@ -51,6 +54,15 @@ export default function FinnyScreen() {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const baseUrl = Constants.expoConfig?.extra?.apiUrl ?? "";
   const router = useRouter();
+  const androidBottomInset = Platform.OS === "android" ? Math.min(insets.bottom, vs(18)) : insets.bottom;
+  const bottomPad = Platform.OS === "android" && keyboardVisible ? 0 : androidBottomInset;
+
+  // Ensure Android system navigation bar matches the screen background (avoids grey area below).
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    NavigationBar.setBackgroundColorAsync("#FFFFFF").catch(() => {});
+    NavigationBar.setButtonStyleAsync("dark").catch(() => {});
+  }, []);
 
   // Transition animations
   const gradientAnim = useRef(new Animated.Value(0)).current;    // 0 = visible, 1 = slid down
@@ -71,6 +83,16 @@ export default function FinnyScreen() {
       return () => loop.stop();
     }
   }, [chatActive]);
+
+  // Keyboard visibility (used to avoid double bottom padding on Android)
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Pulse animation for recording indicator
   useEffect(() => {
@@ -275,11 +297,11 @@ export default function FinnyScreen() {
     const isUser = item.role === "user";
     const displayContent = item.content.replace(/\[ACTION:[\s\S]*\]/, "").trim();
     return (
-      <View style={st.msgBlock}>
+        <View style={st.msgBlock}>
         <View style={[st.nameRow, isUser && st.nameRowUser]}>
           {!isUser && <BlueOrb size={s(16)} />}
           <Text style={st.nameLabel}>{isUser ? "You" : "Finny"}</Text>
-          {isUser && <GreenOrb size={s(16)} />}
+          {isUser && <UserOrb size={s(16)} />}
         </View>
         <View style={[st.bubbleWrap, isUser && st.bubbleWrapUser]}>
           <View style={[st.bubble, isUser ? st.bubbleUser : st.bubbleAI]}>
@@ -367,8 +389,8 @@ export default function FinnyScreen() {
   return (
     <KeyboardAvoidingView
       style={st.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
     >
       {/* ── EMPTY STATE (gradient background) ── */}
       <Animated.View
@@ -425,7 +447,8 @@ export default function FinnyScreen() {
             </ScrollView>
           </View>
 
-          <SafeAreaView edges={["bottom"]} />
+          {/* When keyboard is open, Android already resizes the window; avoid extra bottom inset padding. */}
+          <View style={{ paddingBottom: bottomPad, backgroundColor: "#fff" }} />
         </Animated.View>
 
       {/* ── CHAT STATE ── */}
@@ -474,9 +497,9 @@ export default function FinnyScreen() {
             </ScrollView>
           </View>
 
-          <SafeAreaView edges={["bottom"]} style={{ backgroundColor: "#fff" }}>
+          <View style={{ backgroundColor: "#fff", paddingBottom: bottomPad }}>
             {renderInputBar("chat")}
-          </SafeAreaView>
+          </View>
         </View>
       </Animated.View>
     </KeyboardAvoidingView>
@@ -650,7 +673,7 @@ const st = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingTop: vs(4),
-    paddingBottom: vs(6),
+    paddingBottom: Platform.OS === "ios" ? vs(8) : vs(4),
     paddingHorizontal: s(16),
     gap: s(8),
   },

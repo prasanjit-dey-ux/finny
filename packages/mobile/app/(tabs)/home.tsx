@@ -599,6 +599,7 @@ export default function HomeScreen() {
       <NotificationCenter
         visible={showNotifications}
         onClose={() => { setShowNotifications(false); refreshNotifCount(); }}
+        onSeen={() => refreshNotifCount()}
       />
     </View>
   );

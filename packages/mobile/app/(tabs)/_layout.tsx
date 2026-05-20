@@ -20,7 +20,7 @@ const TABS: TabDef[] = [
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
-  const bottomPad = Math.max(insets.bottom, vs(8));
+  const bottomPad = Math.max(insets.bottom, vs(12));
 
   // Hide tab bar on Finny screen
   const currentRoute = state.routes[state.index];
@@ -47,7 +47,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               return (
                 <Pressable key={route.key} onPress={onPress} style={st.activeWrap}>
                   <View style={st.activePill}>
-                    {tab.icon("#000", s(18), "fill")}
+                    {tab.icon("#4DAAFA", s(18), "fill")}
                     <Text style={st.activeLabel}>{tab.label}</Text>
                   </View>
                 </Pressable>
@@ -56,7 +56,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
             return (
               <Pressable key={route.key} onPress={onPress} style={st.inactiveWrap}>
-                {tab.icon("#71717A", s(20), "regular")}
+                {tab.icon("#3F3F46", s(20), "regular")}
               </Pressable>
             );
           })}
@@ -99,7 +99,7 @@ export default function TabLayout() {
 const st = StyleSheet.create({
   bar: {
     backgroundColor: "#FFFFFF",
-    paddingTop: vs(8),
+    paddingTop: vs(12),
     paddingHorizontal: s(16),
   },
   barInner: {
@@ -115,7 +115,7 @@ const st = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#F1F1F1",
     borderRadius: s(120),
-    paddingVertical: vs(5),
+    paddingVertical: vs(6),
     paddingHorizontal: s(5),
     borderWidth: 1,
     borderColor: "#E5E5E5",
@@ -126,7 +126,7 @@ const st = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: s(14),
-    height: s(42),
+    height: s(50),
   },
 
   // Active tab — nested darker pill
@@ -138,15 +138,15 @@ const st = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: s(6),
-    backgroundColor: "#D4D4D8",
+    backgroundColor: "#DBEBF8",
     borderRadius: s(90),
     paddingHorizontal: s(16),
-    height: s(42),
+    height: s(50),
   },
   activeLabel: {
     fontFamily: "Poppins_500Medium",
     fontSize: fs(13),
-    color: "#3F3F46",
+    color: "#4DAAFA",
   },
 
 

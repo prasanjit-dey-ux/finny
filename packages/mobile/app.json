@@ -32,7 +32,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "web": {
-      "favicon": "./assets/logo.svg",
+      "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
     "plugins": [

@@ -1,24 +1,9 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable, Image, Platform } from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { s, vs, fs } from "../lib/responsive";
-
-const logo = require("../assets/images/logo.png");
-
-/* ─── Orb dot (the small multi-layered circle) ─── */
-function OrbDot({ size = s(16) }: { size?: number }) {
-  const inner = size * 0.625;
-  const topOff = size * 0.25;
-  const leftOff = size * 0.125;
-  return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: "#0EA5E9", overflow: "hidden" }}>
-      <View style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: "#BFDBFE", position: "absolute", left: 0, top: topOff }} />
-      <View style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: "#FFFFFF", position: "absolute", left: 0, top: topOff }} />
-      <View style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: "#BAE6FD", position: "absolute", left: leftOff, top: topOff + size * 0.115 }} />
-    </View>
-  );
-}
+import { BlueOrb } from "./Orbs";
 
 /* ─── Gradient Text (blue linear gradient clipped to text) ─── */
 function GradientText({ text, style }: { text: string; style?: any }) {
@@ -64,7 +49,7 @@ function GradientText({ text, style }: { text: string; style?: any }) {
 export function AiGradientButton({ onPress }: { onPress?: () => void }) {
   return (
     <Pressable onPress={onPress} style={styles.gradientWrap}>
-      <Image source={logo} style={styles.orbIcon} />
+      <BlueOrb size={s(16)} />
       <GradientText text="Ask AI" />
     </Pressable>
   );
@@ -83,7 +68,7 @@ export function AiDarkButton({ onPress }: { onPress?: () => void }) {
         end={{ x: 0.5, y: 1 }}
         style={styles.darkWrap}
       >
-        <OrbDot size={s(16)} />
+        <BlueOrb size={s(16)} />
         <Text style={styles.darkText}>Ask AI</Text>
       </LinearGradient>
     </Pressable>
@@ -97,11 +82,6 @@ const styles = StyleSheet.create({
     fontSize: fs(14),
     textTransform: "capitalize",
   },
-  orbIcon: {
-    width: s(20),
-    height: s(20),
-    borderRadius: s(10),
-  },
 
   /* Gradient button (no bg) */
   gradientWrap: {
@@ -110,7 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: s(6),
     paddingHorizontal: s(10),
-    height: s(42) + vs(10),
+    height: s(50),
   },
 
   /* Dark button */

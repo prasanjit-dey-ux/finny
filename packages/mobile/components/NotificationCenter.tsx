@@ -151,9 +151,11 @@ function generateNotifications(
 export function NotificationCenter({
   visible,
   onClose,
+  onSeen,
 }: {
   visible: boolean;
   onClose: () => void;
+  onSeen?: () => void;
 }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,10 +177,14 @@ export function NotificationCenter({
       const monthExpenses = allExpenses.filter((e) => new Date(e.date) >= monthStart);
       const total = monthExpenses.reduce((a, e) => a + e.amount, 0);
 
-      setNotifications(generateNotifications(profile, bills, subs, wishes, { total }));
+      const next = generateNotifications(profile, bills, subs, wishes, { total });
+      setNotifications(next);
+      // Mark as seen immediately when user opens the center
+      await Store.markNotificationsSeen(next.map((n) => n.id));
+      onSeen?.();
       setLoading(false);
     })();
-  }, [visible]);
+  }, [visible, onSeen]);
 
   const renderItem = ({ item }: { item: Notification }) => {
     const Icon = item.icon;
@@ -235,6 +241,7 @@ export function useNotificationCount() {
   const [count, setCount] = useState(0);
 
   const refresh = useCallback(async () => {
+    const seen = new Set(await Store.getSeenNotificationIds());
     const [profile, bills, subs, wishes, allExpenses] = await Promise.all([
       Store.getProfile(),
       Store.getBills(),
@@ -247,7 +254,7 @@ export function useNotificationCount() {
     const monthExpenses = allExpenses.filter((e) => new Date(e.date) >= monthStart);
     const total = monthExpenses.reduce((a, e) => a + e.amount, 0);
     const notifs = generateNotifications(profile, bills, subs, wishes, { total });
-    setCount(notifs.length);
+    setCount(notifs.filter((n) => !seen.has(n.id)).length);
   }, []);
 
   return { count, refresh };

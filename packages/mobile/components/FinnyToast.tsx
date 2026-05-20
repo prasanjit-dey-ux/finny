@@ -3,9 +3,9 @@
  * Usage: showToast("success", "Title", "Message")
  */
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import Toast, { BaseToast, ToastConfig } from "react-native-toast-message";
-import { CheckCircle, WarningCircle, Info, XCircle } from "phosphor-react-native";
+import { CheckCircle, WarningCircle, Info, XCircle, X } from "phosphor-react-native";
 import { s, vs, fs } from "../lib/responsive";
 
 const TOAST_TYPES = {
@@ -26,6 +26,15 @@ function CustomToast({ type, text1, text2 }: { type: keyof typeof TOAST_TYPES; t
         {text1 ? <Text style={[st.title, { color: config.color }]}>{text1}</Text> : null}
         {text2 ? <Text style={st.message}>{text2}</Text> : null}
       </View>
+      <Pressable
+        onPress={() => Toast.hide()}
+        hitSlop={s(10)}
+        style={st.closeBtn}
+        accessibilityRole="button"
+        accessibilityLabel="Dismiss notification"
+      >
+        <X size={s(16)} color="#71717A" weight="bold" />
+      </Pressable>
     </View>
   );
 }
@@ -75,6 +84,13 @@ const st = StyleSheet.create({
   textWrap: {
     flex: 1,
     gap: vs(2),
+  },
+  closeBtn: {
+    width: s(28),
+    height: s(28),
+    borderRadius: s(14),
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     fontFamily: "Poppins_500Medium",

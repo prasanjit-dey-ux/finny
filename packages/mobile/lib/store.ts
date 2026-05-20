@@ -94,6 +94,7 @@ const KEYS = {
   wishes: "finny:wishes",
   incomeSources: "finny:incomeSources",
   credentials: "finny:credentials",  // { name, passwordHash }[]
+  notifSeen: "finny:notifSeen",       // string[] of notification ids that user has seen
 };
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
@@ -144,6 +145,17 @@ export const Store = {
     return { ...defaultProfile, ...stored };
   },
   setProfile: async (p: UserProfile) => { await set(KEYS.profile, p); DataEvents.emit(); },
+
+  // Notifications (derived) — track "seen" ids so badge can clear after viewing
+  getSeenNotificationIds: () => get<string[]>(KEYS.notifSeen, []),
+  setSeenNotificationIds: async (ids: string[]) => { await set(KEYS.notifSeen, ids); DataEvents.emit(); },
+  markNotificationsSeen: async (ids: string[]) => {
+    if (!ids.length) return;
+    const seen = await Store.getSeenNotificationIds();
+    const next = Array.from(new Set([...seen, ...ids]));
+    await Store.setSeenNotificationIds(next);
+  },
+  clearSeenNotifications: async () => { await Store.setSeenNotificationIds([]); },
 
   // Subscriptions
   getSubscriptions: () => get(KEYS.subscriptions, defaultSubscriptions),
