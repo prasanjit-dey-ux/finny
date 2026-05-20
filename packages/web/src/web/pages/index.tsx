@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const APK_URL = "#download"; // Replace with actual APK link
+const APK_URL = "https://expo.dev/artifacts/eas/qXLZ3XuaV4dFSXdTfY6ReT.apk";
 
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -65,7 +65,7 @@ export default function Index() {
   const handleDownload = () => {
     setDownloading(true);
     setTimeout(() => setDownloading(false), 2000);
-    // window.open(APK_URL, "_blank"); // uncomment when APK is ready
+    window.open(APK_URL, "_blank");
   };
 
   return (
