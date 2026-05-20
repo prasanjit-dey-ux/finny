@@ -593,15 +593,7 @@ export default function WishesScreen() {
               </Text>
             )}
           </View>
-          {wishes.length > 0 && (
-            <TouchableOpacity
-              style={st.addBtn}
-              onPress={() => setShowModal(true)}
-              activeOpacity={0.8}
-            >
-              <Plus size={s(18)} color="#268FFF" weight="bold" />
-            </TouchableOpacity>
-          )}
+          {/* FAB handles add — no duplicate button here */}
         </View>
       </SafeAreaView>
 
@@ -846,15 +838,6 @@ const st = StyleSheet.create({
     color: "#71717A",
     marginTop: vs(-2),
   },
-  addBtn: {
-    width: s(40),
-    height: s(40),
-    borderRadius: s(20),
-    backgroundColor: "#EFF6FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: s(20), paddingTop: vs(4) },
 
