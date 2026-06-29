@@ -301,6 +301,21 @@ Respond in this EXACT JSON format (no markdown, no code blocks):
       console.error('Wish suggest error:', err);
       return c.json({ type: "REALITY_CHECK", title: "Stay on track", body: "Keep saving consistently — every bit counts!", highlight: "" });
     }
+  })
+  .get('/download', async (c) => {
+    try {
+      const res = await fetch('https://expo.dev/artifacts/eas/qYpKQeDmQzPAwYrG2VDh5d.apk', { redirect: 'follow' });
+      if (!res.ok) return c.text('Download failed', 502);
+      c.header('Content-Type', 'application/vnd.android.package-archive');
+      c.header('Content-Disposition', 'attachment; filename="Finny.apk"');
+      if (res.headers.get('content-length')) {
+        c.header('Content-Length', res.headers.get('content-length')!);
+      }
+      return c.body(res.body as ReadableStream);
+    } catch (err: any) {
+      console.error('Download proxy error:', err.message);
+      return c.text('Download failed', 502);
+    }
   });
 
 export type AppType = typeof app;

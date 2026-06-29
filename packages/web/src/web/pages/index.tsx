@@ -1,33 +1,31 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
-const APK_URL = "https://expo.dev/artifacts/eas/qXLZ3XuaV4dFSXdTfY6ReT.apk";
+const APK_URL = "/api/download";
 
-function useInView(threshold = 0.15) {
+/* ── Scroll reveal component ───────────────────── */
+function Reveal({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: React.CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold }
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.unobserve(el); } },
+      { threshold: 0.15 }
     );
-    obs.observe(el);
-    return () => obs.disconnect();
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
-  return { ref, visible };
-}
 
-function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const { ref, visible } = useInView();
   return (
     <div
       ref={ref}
-      className={className}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(32px)",
-        transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`,
+        transition: `opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`,
+        ...style,
       }}
     >
       {children}
@@ -35,412 +33,859 @@ function FadeUp({ children, delay = 0, className = "" }: { children: React.React
   );
 }
 
+/* ── Download icon SVG ─────────────────────────── */
+const DownloadIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 1.5V10.5M8 10.5L4.5 7M8 10.5L11.5 7M2.5 13H13.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+/* ── Shared gradient button ─────────────────────── */
+const gradientBtnStyle: React.CSSProperties = {
+  display: "flex",
+  height: "3rem",
+  padding: "1rem 1.5rem",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "0.5rem",
+  borderRadius: "3.125rem",
+  border: "1px solid #90E9FF",
+  background: "linear-gradient(180deg, #8DDBFF 0%, #268FFF 100%)",
+  boxShadow:
+    "0 4px 14px 0 rgba(0,0,0,0.05), 0 2px 0 0 rgba(255,255,255,0.50) inset, 0 1px 0 0 rgba(0,0,0,0.10)",
+  color: "#fff",
+  fontFamily: "'Instrument Sans', sans-serif",
+  fontWeight: 600,
+  fontSize: 14,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+
+/* ── Features data ──────────────────────────────── */
 const features = [
   {
-    icon: "💸",
-    title: "Track Every Rupee",
-    desc: "Log income and expenses in seconds. See exactly where your money goes — no spreadsheets needed.",
+    img: "/feature1.png",
+    title: "See exactly where your money goes",
+    desc: "Track income, expenses, and budgets at a glance. Nothing slips through the cracks.",
   },
   {
-    icon: "🎯",
-    title: "Turn Wishes Into Plans",
-    desc: "Add a goal — phone, trip, gadget. Finny tells you when you can afford it based on your real savings.",
+    img: "/feature2.png",
+    title: "Ask Finny anything about your money",
+    desc: "\"Can I afford this?\" \"Where did my salary go?\" Just ask — Finny gives honest, clear answers.",
   },
   {
-    icon: "🤖",
-    title: "Ask Your AI Advisor",
-    desc: "Ask anything — 'Can I afford this?', 'How much did I spend on food?'. Get instant, honest answers.",
+    img: "/feature3.png",
+    title: "Dream it. Plan it. Own it.",
+    desc: "Add anything you want to buy. Finny tells you exactly when you can afford it.",
   },
-];
-
-const screenshots = [
-  { src: "/onboarding1.png", caption: "Know your money" },
-  { src: "/onboarding2.png", caption: "Plan your goals" },
-  { src: "/onboarding3.png", caption: "AI-powered advice" },
 ];
 
 export default function Index() {
   const [downloading, setDownloading] = useState(false);
+  const [navLight, setNavLight] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleDownload = () => {
     setDownloading(true);
     setTimeout(() => setDownloading(false), 2000);
-    window.open(APK_URL, "_blank");
+    const a = document.createElement("a");
+    a.href = APK_URL;
+    a.download = "Finny.apk";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
-  return (
-    <div style={{ fontFamily: "'Poppins', sans-serif", background: "#fff", color: "#0a0a0a", overflowX: "hidden" }}>
-      {/* Google Font */}
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  useEffect(() => {
+    videoRef.current?.play().catch(() => {});
 
-      {/* ── Nav ─────────────────────────────────────────────────────── */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 5vw", height: 64,
-        background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid #f0f4f8",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/logo.png" alt="Finny" style={{ width: 32, height: 32, borderRadius: 8 }} />
-          <span style={{ fontWeight: 700, fontSize: 20, letterSpacing: -0.5 }}>finny</span>
-        </div>
-        <button
-          onClick={handleDownload}
+    const handleScroll = () => {
+      const hiwSection = document.getElementById("how-it-works");
+      if (!hiwSection) return;
+      const rect = hiwSection.getBoundingClientRect();
+      setNavLight(rect.top <= 64);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div
+      style={{
+        fontFamily: "'Instrument Sans', sans-serif",
+        background: "#1B1B1B",
+        color: "#fff",
+        minHeight: "100vh",
+      }}
+    >
+      <link
+        href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+
+      {/* ── Nav ──────────────────────────────────────── */}
+      <nav
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          background: navLight ? "rgba(255,255,255,0.9)" : "rgba(27,27,27,0.85)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderBottom: navLight ? "1px solid rgba(0,0,0,0.06)" : "1px solid rgba(255,255,255,0.06)",
+          transition: "background 0.3s, border-bottom 0.3s",
+        }}
+      >
+        <div
           style={{
-            background: "linear-gradient(135deg, #63B0F2, #268FFF)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 100,
-            padding: "9px 22px",
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: "pointer",
-            boxShadow: "0 2px 12px rgba(38,143,255,0.3)",
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "0 clamp(20px, 5vw, 60px)",
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          {downloading ? "Downloading..." : "Get the App"}
-        </button>
-      </nav>
-
-      {/* ── Hero ────────────────────────────────────────────────────── */}
-      <section style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        textAlign: "center",
-        padding: "100px 5vw 60px",
-        background: "linear-gradient(160deg, #f0f8ff 0%, #ffffff 60%)",
-        position: "relative",
-        overflow: "hidden",
-      }}>
-        {/* BG orb */}
-        <div style={{
-          position: "absolute", top: -120, right: -120,
-          width: 500, height: 500, borderRadius: "50%",
-          background: "radial-gradient(circle, #cce8ff55 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-        <div style={{
-          position: "absolute", bottom: -100, left: -100,
-          width: 400, height: 400, borderRadius: "50%",
-          background: "radial-gradient(circle, #e0f2ff44 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-
-        <div style={{ maxWidth: 640, position: "relative" }}>
-          <div style={{
-            display: "inline-block",
-            background: "linear-gradient(135deg, #e6f3ff, #cce4ff)",
-            color: "#268FFF",
-            borderRadius: 100,
-            padding: "5px 16px",
-            fontSize: 13,
-            fontWeight: 600,
-            marginBottom: 24,
-            letterSpacing: 0.3,
-          }}>
-            Your Personal Finance Buddy
+          {/* Left — Logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img
+              src="/logo.png"
+              alt="Finny"
+              style={{ width: 32, height: 32, borderRadius: 8 }}
+            />
+            <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.5, color: navLight ? "#1B1B1B" : "#fff", transition: "color 0.3s" }}>
+              finny
+            </span>
           </div>
 
-          <h1 style={{
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 800,
-            fontSize: "clamp(36px, 6vw, 64px)",
-            lineHeight: 1.1,
-            letterSpacing: -2,
-            color: "#0a0a0a",
-            marginBottom: 20,
-          }}>
-            Spend less.<br />
-            <span style={{
-              background: "linear-gradient(90deg, #63B0F2, #268FFF)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}>Save more.</span>{" "}
-            Stress never.
-          </h1>
+          {/* Center — Links */}
+          <div
+            className="nav-links-center"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 28,
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}
+          >
+            {[
+              { href: "#how-it-works", label: "How it works" },
+              { href: "#features", label: "Features" },
+              { href: "https://x.com/Prasanjit_ui", label: "X/Twitter", external: true },
+            ].map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                className="nav-link"
+                style={{
+                  color: navLight ? "rgba(27,27,27,0.5)" : "rgba(255,255,255,0.5)",
+                  textDecoration: "none",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = navLight ? "#1B1B1B" : "#fff")}
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = navLight ? "rgba(27,27,27,0.5)" : "rgba(255,255,255,0.5)")
+                }
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
 
-          <p style={{
-            fontFamily: "Inter, sans-serif",
-            fontSize: "clamp(15px, 2vw, 18px)",
-            color: "#5a6070",
-            lineHeight: 1.7,
-            marginBottom: 36,
-            maxWidth: 480,
-            margin: "0 auto 36px",
-          }}>
-            Finny tracks your money, plans your goals, and gives you an AI advisor — all in one clean app.
-          </p>
+          {/* Right — Download (desktop) + Burger (mobile) */}
+          <div className="nav-right-download" style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <button onClick={handleDownload} style={gradientBtnStyle}>
+              <DownloadIcon /> Download
+            </button>
+          </div>
 
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <button
-              onClick={handleDownload}
+          {/* Burger button (mobile only) */}
+          <button
+            className="nav-burger"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Menu"
+            style={{
+              display: "none",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 4,
+              zIndex: 110,
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              {menuOpen ? (
+                <path d="M6 6L18 18M6 18L18 6" stroke={navLight ? "#1B1B1B" : "#fff"} strokeWidth="2" strokeLinecap="round"/>
+              ) : (
+                <>
+                  <path d="M4 7H20" stroke={navLight ? "#1B1B1B" : "#fff"} strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 12H20" stroke={navLight ? "#1B1B1B" : "#fff"} strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 17H20" stroke={navLight ? "#1B1B1B" : "#fff"} strokeWidth="2" strokeLinecap="round"/>
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      {/* ── Mobile menu overlay ────────────────────── */}
+      {menuOpen && (
+        <div
+          className="mobile-menu-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 99,
+            background: navLight ? "rgba(255,255,255,0.97)" : "rgba(27,27,27,0.97)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 32,
+            paddingTop: 64,
+          }}
+        >
+          {[
+            { href: "#how-it-works", label: "How it works" },
+            { href: "#features", label: "Features" },
+            { href: "https://x.com/Prasanjit_ui", label: "X/Twitter", external: true },
+          ].map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              onClick={() => setMenuOpen(false)}
               style={{
-                background: "linear-gradient(135deg, #63B0F2, #268FFF)",
-                color: "#fff",
-                border: "none",
-                borderRadius: 100,
-                padding: "15px 36px",
-                fontFamily: "Poppins, sans-serif",
-                fontWeight: 700,
-                fontSize: 16,
-                cursor: "pointer",
-                boxShadow: "0 8px 28px rgba(38,143,255,0.35)",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
+                color: navLight ? "#1B1B1B" : "#fff",
+                textDecoration: "none",
+                fontSize: 20,
+                fontWeight: 500,
+                fontFamily: "'Instrument Sans', sans-serif",
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 16L7 11M12 16L17 11M12 16V4M20 20H4" />
-              </svg>
-              {downloading ? "Downloading..." : "Download APK"}
+              {link.label}
+            </a>
+          ))}
+          <button onClick={() => { handleDownload(); setMenuOpen(false); }} style={{ ...gradientBtnStyle, marginTop: 8 }}>
+            <DownloadIcon /> Download For Android
+          </button>
+        </div>
+      )}
+
+      {/* ── Hero ──────────────────────────────────────── */}
+      <section
+        style={{
+          paddingTop: 140,
+          paddingLeft: "clamp(20px, 5vw, 60px)",
+          paddingRight: "clamp(20px, 5vw, 60px)",
+          maxWidth: 1280,
+          margin: "0 auto",
+        }}
+      >
+        {/* Top row */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 48,
+            flexWrap: "wrap",
+            marginBottom: 48,
+          }}
+        >
+          {/* Heading — left */}
+          <Reveal style={{ flex: "1 1 360px" }}>
+            <h1
+              className="hero-heading"
+              style={{
+                color: "#FFF",
+                fontFamily: "'Instrument Sans', sans-serif",
+                fontSize: "3rem",
+                fontStyle: "normal",
+                fontWeight: 500,
+                lineHeight: "3.5rem",
+                margin: 0,
+              }}
+            >
+              Finally know where
+              <br />
+              your money went.
+            </h1>
+          </Reveal>
+
+          {/* Right — Para + CTA, top-aligned with heading */}
+          <Reveal delay={0.15} style={{ flex: "0 1 420px", display: "flex", flexDirection: "column", justifyContent: "flex-start", paddingTop: 4 }}>
+            <p
+              className="hero-para"
+              style={{
+                color: "#FFF",
+                fontFamily: "'Instrument Sans', sans-serif",
+                fontSize: "1.125rem",
+                fontStyle: "normal",
+                fontWeight: 400,
+                lineHeight: "1.625rem",
+                margin: "0 0 24px 0",
+                opacity: 0.55,
+              }}
+            >
+              Spend less. Save more. Stress never. Finny tracks your money,
+              plans your goals, and gives you an AI advisor all in one clean
+              app.
+            </p>
+            <div>
+              <button onClick={handleDownload} style={gradientBtnStyle}>
+                <DownloadIcon /> {downloading ? "Downloading..." : "Download For Android"}
+              </button>
+            </div>
+          </Reveal>
+        </div>
+
+        {/* Full-width video */}
+        <Reveal delay={0.3}>
+          <div
+            style={{
+              width: "100%",
+              borderRadius: 16,
+              overflow: "hidden",
+              background: "#000",
+            }}
+          >
+            <video
+              ref={videoRef}
+              src="/demo.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{
+                width: "100%",
+                display: "block",
+              }}
+            />
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── How It Works ──────────────────────────── */}
+      <section
+        id="how-it-works"
+        style={{
+          background: "#FFFFFF",
+          marginTop: 100,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "100px clamp(20px, 5vw, 60px)",
+          }}
+        >
+        {/* Section header */}
+        <Reveal>
+          <div style={{ textAlign: "center", marginBottom: 56 }}>
+            <span
+              style={{
+                color: "#008DFF",
+                fontFamily: "'Instrument Sans', sans-serif",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              HOW IT WORKS
+            </span>
+            <h2
+              className="section-heading"
+              style={{
+                color: "#1B1B1B",
+                fontFamily: "'Instrument Sans', sans-serif",
+                fontSize: "2.5rem",
+                fontWeight: 500,
+                lineHeight: "3rem",
+                margin: "16px 0 0 0",
+              }}
+            >
+              Up and running in 2 minutes.
+            </h2>
+            <p
+              style={{
+                color: "rgba(27,27,27,0.5)",
+                fontFamily: "'Instrument Sans', sans-serif",
+                fontSize: "1.125rem",
+                fontWeight: 400,
+                lineHeight: "1.625rem",
+                margin: "16px auto 0",
+                maxWidth: 480,
+              }}
+            >
+              No bank connection. No complicated setup. Just three steps and you
+              are good to go.
+            </p>
+          </div>
+        </Reveal>
+
+        {/* Cards grid */}
+        <div
+          className="hiw-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 24,
+          }}
+        >
+          {[
+            {
+              img: "/card1.png",
+              title: "Download and open",
+              desc: "Install Finny in seconds. No sign-up. No bank connection. Just open and you are ready.",
+            },
+            {
+              img: "/card2.png",
+              title: "Ask Finny anything",
+              desc: "Where did my salary go? Can I afford this? Honest answers based on your real numbers.",
+            },
+            {
+              img: "/card3.png",
+              title: "Add your wishes",
+              desc: "Add anything you want to buy. Finny tells you when you can afford it.",
+            },
+          ].map((card, i) => (
+            <Reveal key={i} delay={i * 0.1}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: "1rem",
+                alignSelf: "stretch",
+              }}
+            >
+              {/* Card image */}
+              <div
+                style={{
+                  width: "100%",
+                  aspectRatio: "1 / 1",
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  background: "linear-gradient(180deg, #D6EEFF 0%, #EAF4FF 100%)",
+                }}
+              >
+                <img
+                  src={card.img}
+                  alt={card.title}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              </div>
+              {/* Card text */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: "0.5rem",
+                  alignSelf: "stretch",
+                }}
+              >
+                <h3
+                  style={{
+                    color: "#1B1B1B",
+                    fontFamily: "'Instrument Sans', sans-serif",
+                    fontSize: "1.25rem",
+                    fontWeight: 600,
+                    lineHeight: "1.75rem",
+                    margin: 0,
+                  }}
+                >
+                  {card.title}
+                </h3>
+                <p
+                  style={{
+                    color: "rgba(27,27,27,0.5)",
+                    fontFamily: "'Instrument Sans', sans-serif",
+                    fontSize: "1rem",
+                    fontWeight: 400,
+                    lineHeight: "1.5rem",
+                    margin: 0,
+                  }}
+                >
+                  {card.desc}
+                </p>
+              </div>
+            </div>
+            </Reveal>
+          ))}
+        </div>
+        </div>
+      </section>
+
+      {/* ── Features (zigzag) ─────────────────────────── */}
+      <section
+        id="features"
+        style={{
+          background: "#FFFFFF",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "100px clamp(20px, 5vw, 60px)",
+          }}
+        >
+          {/* Section header */}
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 72 }}>
+              <span
+                style={{
+                  color: "#008DFF",
+                  fontFamily: "'Instrument Sans', sans-serif",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                FEATURES
+              </span>
+              <h2
+                className="section-heading"
+                style={{
+                  color: "#1B1B1B",
+                  fontFamily: "'Instrument Sans', sans-serif",
+                  fontSize: "2.5rem",
+                  fontWeight: 500,
+                  lineHeight: "3rem",
+                  margin: "16px 0 0 0",
+                }}
+              >
+                Simple tools. Real results.
+              </h2>
+              <p
+                style={{
+                  color: "rgba(27,27,27,0.5)",
+                  fontFamily: "'Instrument Sans', sans-serif",
+                  fontSize: "1.125rem",
+                  fontWeight: 400,
+                  lineHeight: "1.625rem",
+                  margin: "16px auto 0",
+                  maxWidth: 520,
+                }}
+              >
+                No complicated setup. No bank connection needed.{"\n"}Just open Finny and start making sense of your money.
+              </p>
+            </div>
+          </Reveal>
+
+          {/* Zigzag rows */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 80 }}>
+            {features.map((feat, i) => {
+              const imgLeft = i % 2 === 0;
+              return (
+                <div
+                  key={i}
+                  className="feature-row"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 64,
+                    flexDirection: imgLeft ? "row" : "row-reverse",
+                  }}
+                >
+                  {/* Image */}
+                  <Reveal style={{ flex: "1 1 50%" }}>
+                    <img
+                      src={feat.img}
+                      alt={feat.title}
+                      style={{
+                        width: "100%",
+                        borderRadius: 16,
+                        display: "block",
+                      }}
+                    />
+                  </Reveal>
+
+                  {/* Text */}
+                  <Reveal delay={0.15} style={{ flex: "1 1 50%" }}>
+                    <h3
+                      style={{
+                        color: "#1B1B1B",
+                        fontFamily: "'Instrument Sans', sans-serif",
+                        fontSize: "2rem",
+                        fontWeight: 500,
+                        lineHeight: "2.5rem",
+                        margin: "0 0 16px 0",
+                      }}
+                    >
+                      {feat.title}
+                    </h3>
+                    <p
+                      style={{
+                        color: "rgba(27,27,27,0.5)",
+                        fontFamily: "'Instrument Sans', sans-serif",
+                        fontSize: "1.125rem",
+                        fontWeight: 400,
+                        lineHeight: "1.75rem",
+                        margin: 0,
+                        maxWidth: 420,
+                      }}
+                    >
+                      {feat.desc}
+                    </p>
+                  </Reveal>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA Section ─────────────────────────────── */}
+      <section
+        style={{
+          background: "#FFFFFF",
+          padding: "120px clamp(20px, 5vw, 60px)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <Reveal>
+            <h2
+              className="section-heading"
+              style={{
+                color: "#1B1B1B",
+                fontFamily: "'Instrument Sans', sans-serif",
+                fontSize: "3rem",
+                fontWeight: 500,
+                lineHeight: "3.5rem",
+                margin: "0 0 32px 0",
+              }}
+            >
+              Try Finny now.
+            </h2>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <button onClick={handleDownload} style={gradientBtnStyle}>
+              <DownloadIcon /> Download For Android
             </button>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              fontSize: 13, color: "#8a8a8a", fontFamily: "Inter, sans-serif",
-              padding: "15px 20px",
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#268FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" /><line x1="12" y1="18" x2="12.01" y2="18" />
-              </svg>
-              Android • Free forever
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── Footer ───────────────────────────────────── */}
+      <footer
+        style={{
+          background: "#1B1B1B",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "48px clamp(20px, 5vw, 60px)",
+          }}
+        >
+          {/* Top row */}
+          <div
+            className="footer-top"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 40,
+              marginBottom: 48,
+              flexWrap: "wrap",
+            }}
+          >
+            {/* Left — Logo + tagline */}
+            <div style={{ maxWidth: 280 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <img src="/logo.png" alt="Finny" style={{ width: 32, height: 32, borderRadius: 8 }} />
+                <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.5, color: "#fff" }}>
+                  finny
+                </span>
+              </div>
+              <p
+                style={{
+                  color: "rgba(255,255,255,0.4)",
+                  fontFamily: "'Instrument Sans', sans-serif",
+                  fontSize: "0.875rem",
+                  lineHeight: "1.375rem",
+                  margin: 0,
+                }}
+              >
+                Your personal finance companion.{"\n"}Track, plan, and save — all in one app.
+              </p>
+            </div>
+
+            {/* Right — Links */}
+            <div
+              className="footer-links"
+              style={{
+                display: "flex",
+                gap: 56,
+              }}
+            >
+              <div>
+                <h4
+                  style={{
+                    color: "rgba(255,255,255,0.3)",
+                    fontFamily: "'Instrument Sans', sans-serif",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    margin: "0 0 16px 0",
+                  }}
+                >
+                  Product
+                </h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {[
+                    { label: "How it works", href: "#how-it-works" },
+                    { label: "Features", href: "#features" },
+                    { label: "Download", href: APK_URL },
+                  ].map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      style={{
+                        color: "rgba(255,255,255,0.5)",
+                        textDecoration: "none",
+                        fontFamily: "'Instrument Sans', sans-serif",
+                        fontSize: "0.875rem",
+                        transition: "color 0.2s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4
+                  style={{
+                    color: "rgba(255,255,255,0.3)",
+                    fontFamily: "'Instrument Sans', sans-serif",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    margin: "0 0 16px 0",
+                  }}
+                >
+                  Connect
+                </h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <a
+                    href="https://x.com/Prasanjit_ui"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: "rgba(255,255,255,0.5)",
+                      textDecoration: "none",
+                      fontFamily: "'Instrument Sans', sans-serif",
+                      fontSize: "0.875rem",
+                      transition: "color 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+                  >
+                    X/Twitter
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Trust badges */}
-          <div style={{ marginTop: 48, display: "flex", justifyContent: "center", gap: 28, flexWrap: "wrap" }}>
-            {["No ads", "No subscription", "Offline ready"].map((t) => (
-              <div key={t} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#5a6070", fontFamily: "Inter, sans-serif" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#268FFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                {t}
-              </div>
-            ))}
-          </div>
-        </div>
+          {/* Divider */}
+          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 24 }} />
 
-        {/* Scroll hint */}
-        <div style={{
-          position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-          color: "#b0b8c8", fontSize: 12, fontFamily: "Inter, sans-serif",
-          animation: "bounce 2s infinite",
-        }}>
-          <span>scroll</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </div>
-      </section>
-
-      {/* ── Screenshots ─────────────────────────────────────────────── */}
-      <section style={{ padding: "80px 5vw", background: "#fafcff" }}>
-        <FadeUp className="" delay={0}>
-          <h2 style={{
-            textAlign: "center",
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 700,
-            fontSize: "clamp(24px, 4vw, 40px)",
-            letterSpacing: -1,
-            marginBottom: 8,
-          }}>
-            Simple by design
-          </h2>
-          <p style={{
-            textAlign: "center",
-            fontFamily: "Inter, sans-serif",
-            color: "#8a8a8a",
-            fontSize: 15,
-            marginBottom: 52,
-          }}>
-            Every screen built to keep you in control, not overwhelmed.
-          </p>
-        </FadeUp>
-
-        <div style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "clamp(16px, 3vw, 32px)",
-          flexWrap: "wrap",
-        }}>
-          {screenshots.map((s, i) => (
-            <FadeUp key={i} delay={i * 120}>
-              <div style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
-              }}>
-                <div style={{
-                  borderRadius: 24,
-                  overflow: "hidden",
-                  boxShadow: "0 16px 48px rgba(38,143,255,0.12), 0 2px 8px rgba(0,0,0,0.06)",
-                  width: "clamp(140px, 22vw, 200px)",
-                  border: "4px solid #fff",
-                }}>
-                  <img src={s.src} alt={s.caption} style={{ width: "100%", display: "block" }} />
-                </div>
-                <span style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#8a8a8a" }}>{s.caption}</span>
-              </div>
-            </FadeUp>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Features ────────────────────────────────────────────────── */}
-      <section style={{ padding: "80px 5vw", maxWidth: 1000, margin: "0 auto" }}>
-        <FadeUp>
-          <h2 style={{
-            textAlign: "center",
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 700,
-            fontSize: "clamp(24px, 4vw, 40px)",
-            letterSpacing: -1,
-            marginBottom: 8,
-          }}>
-            Everything you need
-          </h2>
-          <p style={{
-            textAlign: "center",
-            fontFamily: "Inter, sans-serif",
-            color: "#8a8a8a",
-            fontSize: 15,
-            marginBottom: 52,
-          }}>
-            No bloat. Just the tools that actually move the needle.
-          </p>
-        </FadeUp>
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: 20,
-        }}>
-          {features.map((f, i) => (
-            <FadeUp key={i} delay={i * 100}>
-              <div style={{
-                background: "#fff",
-                border: "1px solid #eef2f8",
-                borderRadius: 20,
-                padding: "28px 24px",
-                boxShadow: "0 2px 16px rgba(38,143,255,0.06)",
-                transition: "transform 0.2s, box-shadow 0.2s",
-              }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(38,143,255,0.12)";
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = "0 2px 16px rgba(38,143,255,0.06)";
-                }}
-              >
-                <div style={{ fontSize: 32, marginBottom: 14 }}>{f.icon}</div>
-                <h3 style={{
-                  fontFamily: "Poppins, sans-serif",
-                  fontWeight: 600,
-                  fontSize: 17,
-                  marginBottom: 8,
-                  letterSpacing: -0.3,
-                }}>{f.title}</h3>
-                <p style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  color: "#6b7280",
-                  lineHeight: 1.7,
-                  margin: 0,
-                }}>{f.desc}</p>
-              </div>
-            </FadeUp>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CTA ─────────────────────────────────────────────────────── */}
-      <section style={{ padding: "80px 5vw" }}>
-        <FadeUp>
-          <div style={{
-            background: "linear-gradient(135deg, #e6f3ff 0%, #cce4ff 100%)",
-            borderRadius: 28,
-            padding: "60px 40px",
-            textAlign: "center",
-            maxWidth: 680,
-            margin: "0 auto",
-          }}>
-            <h2 style={{
-              fontFamily: "Poppins, sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(26px, 4vw, 40px)",
-              letterSpacing: -1.5,
-              marginBottom: 12,
-            }}>
-              Start for free today.
-            </h2>
-            <p style={{
-              fontFamily: "Inter, sans-serif",
-              color: "#4a5568",
-              fontSize: 15,
-              marginBottom: 32,
-              lineHeight: 1.6,
-            }}>
-              No sign-up. No credit card. Just download and go.
-            </p>
-            <button
-              onClick={handleDownload}
+          {/* Bottom row */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <p
               style={{
-                background: "linear-gradient(135deg, #63B0F2, #268FFF)",
-                color: "#fff",
-                border: "none",
-                borderRadius: 100,
-                padding: "15px 40px",
-                fontFamily: "Poppins, sans-serif",
-                fontWeight: 700,
-                fontSize: 16,
-                cursor: "pointer",
-                boxShadow: "0 8px 28px rgba(38,143,255,0.35)",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
+                color: "rgba(255,255,255,0.3)",
+                fontFamily: "'Instrument Sans', sans-serif",
+                fontSize: "0.8125rem",
+                margin: 0,
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 16L7 11M12 16L17 11M12 16V4M20 20H4" />
-              </svg>
-              {downloading ? "Downloading..." : "Download APK — It's Free"}
-            </button>
+              &copy; {new Date().getFullYear()} Finny. All rights reserved.
+            </p>
+            <p
+              style={{
+                color: "rgba(255,255,255,0.3)",
+                fontFamily: "'Instrument Sans', sans-serif",
+                fontSize: "0.8125rem",
+                margin: 0,
+              }}
+            >
+              Made with care in India
+            </p>
           </div>
-        </FadeUp>
-      </section>
-
-      {/* ── Footer ──────────────────────────────────────────────────── */}
-      <footer style={{
-        borderTop: "1px solid #f0f4f8",
-        padding: "28px 5vw",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: 12,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <img src="/logo.png" alt="Finny" style={{ width: 24, height: 24, borderRadius: 6 }} />
-          <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: -0.3 }}>finny</span>
         </div>
-        <span style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#b0b8c8" }}>
-          Made with ❤️ for your financial peace of mind
-        </span>
       </footer>
 
       <style>{`
-        @keyframes bounce {
-          0%, 100% { transform: translateX(-50%) translateY(0); }
-          50% { transform: translateX(-50%) translateY(6px); }
-        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { scroll-behavior: smooth; }
+        body { scroll-behavior: smooth; background: #1B1B1B; }
+        html { scroll-behavior: smooth; }
+        @media (max-width: 900px) {
+          .hiw-grid { grid-template-columns: 1fr !important; max-width: 400px; margin: 0 auto; }
+          .feature-row { flex-direction: column !important; gap: 32px !important; }
+        }
+        @media (max-width: 680px) {
+          .nav-links-center { display: none !important; }
+          .nav-right-download { display: none !important; }
+          .nav-burger { display: flex !important; }
+          .hero-heading { font-size: 2rem !important; line-height: 2.5rem !important; }
+          .hero-para { font-size: 1rem !important; line-height: 1.5rem !important; }
+          .section-heading { font-size: 1.75rem !important; line-height: 2.25rem !important; }
+          .footer-top { flex-direction: column !important; gap: 32px !important; }
+          .footer-links { flex-direction: column !important; gap: 24px !important; }
+        }
       `}</style>
     </div>
   );
