@@ -304,7 +304,7 @@ Respond in this EXACT JSON format (no markdown, no code blocks):
   })
   .get('/download', async (c) => {
     try {
-      const res = await fetch('https://expo.dev/artifacts/eas/qYpKQeDmQzPAwYrG2VDh5d.apk', { redirect: 'follow' });
+      const res = await fetch('https://expo.dev/artifacts/eas/Cf4eMIaBRjQH51Q2CrJXyZR7moC6oatkVUnApNBkf_I.apk', { redirect: 'follow' });
       if (!res.ok) return c.text('Download failed', 502);
       c.header('Content-Type', 'application/vnd.android.package-archive');
       c.header('Content-Disposition', 'attachment; filename="Finny.apk"');
